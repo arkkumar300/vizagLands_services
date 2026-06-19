@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
+import slugify from 'slugify';
 
 const Project = sequelize.define('Project', {
   id: {
@@ -16,6 +17,11 @@ const Project = sequelize.define('Project', {
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
+  },
+  slug: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    // unique: true
   },
   categoryId: {
     type: DataTypes.UUID,
@@ -123,18 +129,18 @@ const Project = sequelize.define('Project', {
       }
     },
   },
-  
+
   availableStatus: {
     type: DataTypes.ENUM('Ready to Move', 'Under Construction'),
     defaultValue: 'Ready to Move'
   },
   ageOfProperty: {
     type: DataTypes.STRING,
-    allowNull:true
+    allowNull: true
   },
   possession: {
     type: DataTypes.STRING,
-    allowNull:true
+    allowNull: true
   },
   viewCount: {
     type: DataTypes.INTEGER,
@@ -150,7 +156,7 @@ const Project = sequelize.define('Project', {
   },
   renewalDate: {
     type: DataTypes.DATE,
-    allowNull:true
+    allowNull: true
   },
   status: {
     type: DataTypes.ENUM('pending', 'verified', 'rejected', 'inactive'),
@@ -160,7 +166,7 @@ const Project = sequelize.define('Project', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
-  isSold: { 
+  isSold: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   }
@@ -168,13 +174,24 @@ const Project = sequelize.define('Project', {
   tableName: 'project',
   hooks: {
     beforeCreate: (property) => {
-      const today = new Date();
-      const renewal = new Date(today);
+      property.slug = slugify(property.title, {
+        lower: true,
+        strict: true
+      });
+  
+      const renewal = new Date();
       renewal.setDate(renewal.getDate() + 60);
-
       property.renewalDate = renewal;
+    },
+  
+    beforeUpdate: (property) => {
+      if (property.changed('title')) {
+        property.slug = slugify(property.title, {
+          lower: true,
+          strict: true
+        });
+      }
     }
-  }
-});
+  }});
 
 export default Project;

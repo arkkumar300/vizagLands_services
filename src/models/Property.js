@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
+import slugify from 'slugify';
 
 const Property = sequelize.define('Property', {
   id: {
@@ -16,6 +17,11 @@ const Property = sequelize.define('Property', {
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
+  },
+  slug: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    // unique: true
   },
   categoryId: {
     type: DataTypes.UUID,
@@ -123,18 +129,18 @@ const Property = sequelize.define('Property', {
       }
     },
   },
-  
+
   availableStatus: {
     type: DataTypes.ENUM('Ready to Move', 'Under Construction'),
     defaultValue: 'Ready to Move'
   },
   ageOfProperty: {
     type: DataTypes.STRING,
-    allowNull:true
+    allowNull: true
   },
   possession: {
     type: DataTypes.STRING,
-    allowNull:true
+    allowNull: true
   },
   viewCount: {
     type: DataTypes.INTEGER,
@@ -150,7 +156,7 @@ const Property = sequelize.define('Property', {
   },
   renewalDate: {
     type: DataTypes.DATE,
-    allowNull:true
+    allowNull: true
   },
   status: {
     type: DataTypes.ENUM('pending', 'verified', 'rejected', 'inactive'),
@@ -168,7 +174,7 @@ const Property = sequelize.define('Property', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  isSold: { 
+  isSold: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   }
@@ -176,13 +182,24 @@ const Property = sequelize.define('Property', {
   tableName: 'properties',
   hooks: {
     beforeCreate: (property) => {
-      const today = new Date();
-      const renewal = new Date(today);
+      property.slug = slugify(property.title, {
+        lower: true,
+        strict: true
+      });
+  
+      const renewal = new Date();
       renewal.setDate(renewal.getDate() + 60);
-
       property.renewalDate = renewal;
+    },
+  
+    beforeUpdate: (property) => {
+      if (property.changed('title')) {
+        property.slug = slugify(property.title, {
+          lower: true,
+          strict: true
+        });
+      }
     }
-  }
-});
+  }});
 
 export default Property;

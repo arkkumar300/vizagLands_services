@@ -265,6 +265,41 @@ export const getPropertyById = async (req, res) => {
   }
 };
 
+export const getPropertyByslug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { incrementView } = req.query;
+
+    const property = await Property.findOne(slug, {
+      include: [
+        { model: Address, as: 'address' },
+        { model: PropertyProfile, as: 'profile' },
+        { model: Category, as: 'category' },
+        {
+          model: Client,
+          as: 'client',
+          attributes: ['id', 'fullName', 'phoneNumber', 'email', 'role', 'companyName', 'website']
+        }
+      ]
+    });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    if (incrementView === 'true') {
+      await property.increment('viewCount');
+    }
+
+    res.json({
+      message: 'Property retrieved successfully',
+      property
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const updateProperty = async (req, res) => {
   try {
     const { id } = req.params;

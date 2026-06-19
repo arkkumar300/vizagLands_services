@@ -10,7 +10,8 @@ import {
   updatePropertyViewCount,
   createAdminProperty,
   getAllProject,
-  searchProjects
+  searchProjects,
+  getPropertyByslug
 } from '../controllers/propertyController.js';
 import { authenticate, authenticateClient } from '../middleware/auth.js';
 
@@ -24,6 +25,7 @@ router.get('/most-viewed', getMostViewedProperties);
 router.get('/searchProperty', searchProperties);
 router.get('/searchProjects', searchProjects);
 router.get('/:id', getPropertyById);
+router.get('/:slug', getPropertyByslug);
 router.put('/:id', authenticate, updateProperty);
 router.put('/updateView/:id', updatePropertyViewCount);
 router.put('/updateRenewal/:id', updatePropertyViewCount);
