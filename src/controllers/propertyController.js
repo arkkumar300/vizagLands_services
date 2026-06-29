@@ -270,7 +270,8 @@ export const getPropertyByslug = async (req, res) => {
     const { slug } = req.params;
     const { incrementView } = req.query;
 
-    const property = await Property.findOne(slug, {
+    const property = await Property.findOne({
+      where: { slug },
       include: [
         { model: Address, as: 'address' },
         { model: PropertyProfile, as: 'profile' },
@@ -278,13 +279,23 @@ export const getPropertyByslug = async (req, res) => {
         {
           model: Client,
           as: 'client',
-          attributes: ['id', 'fullName', 'phoneNumber', 'email', 'role', 'companyName', 'website']
+          attributes: [
+            'id',
+            'fullName',
+            'phoneNumber',
+            'email',
+            'role',
+            'companyName',
+            'website'
+          ]
         }
       ]
     });
 
     if (!property) {
-      return res.status(404).json({ error: 'Property not found' });
+      return res.status(404).json({
+        error: 'Property not found'
+      });
     }
 
     if (incrementView === 'true') {
@@ -296,7 +307,9 @@ export const getPropertyByslug = async (req, res) => {
       property
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: error.message
+    });
   }
 };
 
