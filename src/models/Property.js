@@ -20,7 +20,7 @@ const Property = sequelize.define('Property', {
   },
   slug: {
     type: DataTypes.STRING(100),
-    allowNull: false,
+    allowNull: true,
     // unique: true
   },
   categoryId: {
@@ -181,25 +181,32 @@ const Property = sequelize.define('Property', {
 }, {
   tableName: 'properties',
   hooks: {
-    beforeCreate: (property) => {
-      property.slug = slugify(property.title, {
-        lower: true,
-        strict: true
-      });
+    beforeValidate: (property) => {
+      if (property.title) {
+        property.slug = slugify(property.title, {
+          lower: true,
+          strict: true,
+          replacement: "-"
+        });
+      }
   
-      const renewal = new Date();
-      renewal.setDate(renewal.getDate() + 60);
-      property.renewalDate = renewal;
+      if (!property.renewalDate) {
+        const renewal = new Date();
+        renewal.setDate(renewal.getDate() + 60);
+        property.renewalDate = renewal;
+      }
     },
   
     beforeUpdate: (property) => {
-      if (property.changed('title')) {
+      if (property.changed("title")) {
         property.slug = slugify(property.title, {
           lower: true,
-          strict: true
+          strict: true,
+          replacement: "-"
         });
       }
     }
-  }});
+  }
+});
 
 export default Property;

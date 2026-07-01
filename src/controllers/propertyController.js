@@ -488,33 +488,25 @@ export const getMostViewedProperties = async (req, res) => {
 
 export const searchProperties = async (req, res) => {
   try {
-    const { city, locality, type, minPrice, maxPrice } = req.query;
+    const { city, locality, marketType,categoryId, minPrice, maxPrice } = req.query;
 
-    const whereConditions = { isProject: false }; // 👈 added condition
-    const addressWhere = {};
-    const categoryWhere = {};
-
-    // 🔹 Price range filter
-    if (minPrice && maxPrice) {
-      whereConditions.price = { [Op.between]: [parseFloat(minPrice), parseFloat(maxPrice)] };
-    } else if (minPrice) {
-      whereConditions.price = { [Op.gte]: parseFloat(minPrice) };
-    } else if (maxPrice) {
-      whereConditions.price = { [Op.lte]: parseFloat(maxPrice) };
+    const where = { isProject: false }; // 👈 added condition
+    where.status = 'verified';
+        const addressWhere = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (marketType) where.marketType = marketType;
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price[Op.gte] = minPrice;
+      if (maxPrice) where.price[Op.lte] = maxPrice;
     }
 
-    // 🔹 Address filters (combine district + location)
     if (city) addressWhere.city = city;
     if (locality) addressWhere.locality = locality;
 
-    // 🔹 Category filter (property type)
-    if (type) {
-      categoryWhere.name = { [Op.like]: `%${type}%` };
-    }
-
     // 🔹 Query database
     const properties = await Property.findAll({
-      where: whereConditions,
+      where: where,
       include: [
         {
           model: Address,
@@ -523,8 +515,7 @@ export const searchProperties = async (req, res) => {
         },
         {
           model: Category,
-          as: 'category',
-          where: Object.keys(categoryWhere).length > 0 ? categoryWhere : undefined,
+          as: 'category'
         },
       ],
       order: [['createdAt', 'DESC']],
@@ -548,33 +539,24 @@ export const searchProperties = async (req, res) => {
 
 export const searchProjects = async (req, res) => {
   try {
-    const { city, locality, type, minPrice, maxPrice } = req.query;
+    const { city, locality, marketType,categoryId, minPrice, maxPrice } = req.query;
 
-    const whereConditions = { isProject: true }; // 👈 added condition
-    const addressWhere = {};
-    const categoryWhere = {};
-
-    // 🔹 Price range filter
-    if (minPrice && maxPrice) {
-      whereConditions.price = { [Op.between]: [parseFloat(minPrice), parseFloat(maxPrice)] };
-    } else if (minPrice) {
-      whereConditions.price = { [Op.gte]: parseFloat(minPrice) };
-    } else if (maxPrice) {
-      whereConditions.price = { [Op.lte]: parseFloat(maxPrice) };
+    const where = { isProject: true }; // 👈 added condition
+    where.status = 'verified';
+        const addressWhere = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (marketType) where.marketType = marketType;
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price[Op.gte] = minPrice;
+      if (maxPrice) where.price[Op.lte] = maxPrice;
     }
 
-    // 🔹 Address filters (combine district + location)
     if (city) addressWhere.city = city;
     if (locality) addressWhere.locality = locality;
-
-    // 🔹 Category filter (property type)
-    if (type) {
-      categoryWhere.name = { [Op.like]: `%${type}%` };
-    }
-
     // 🔹 Query database
     const properties = await Property.findAll({
-      where: whereConditions,
+      where: where,
       include: [
         {
           model: Address,
@@ -583,8 +565,7 @@ export const searchProjects = async (req, res) => {
         },
         {
           model: Category,
-          as: 'category',
-          where: Object.keys(categoryWhere).length > 0 ? categoryWhere : undefined,
+          as: 'category'
         },
       ],
       order: [['createdAt', 'DESC']],
