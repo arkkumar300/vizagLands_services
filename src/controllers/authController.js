@@ -1,6 +1,7 @@
 import models from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
 import moment from 'moment';
+import { sendSMS } from '../config/sendSMS.js';
 
 const { Client, Admin } = models;
 
@@ -303,6 +304,7 @@ export const loginWithPhone = async (req, res) => {
         message: "Failed to generate OTP",
       });
     }
+    await sendSMS(cleanPhone, otpResult.otp)
 
     return res.json({
       success: true,
@@ -409,15 +411,7 @@ export const verifyPhoneLogin = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        phone: user.phoneNumber,
-        full_name: user.fullName,
-        role: user.role,
-        is_verified: user.is_verified,
-        profilePic: user.profilePic,
-      },
+      user,
     });
   } catch (error) {
     console.error("Phone login verification error:", error);

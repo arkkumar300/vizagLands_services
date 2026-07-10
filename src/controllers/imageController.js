@@ -19,7 +19,7 @@ export const uploadImage = async (req, res) => {
     res.status(201).json({
       message: 'Image uploaded successfully',
       imagePath,
-      url: `https://${req.get('host')}${imagePath}`
+      url: `http://${req.get('host')}${imagePath}`
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -38,7 +38,7 @@ export const uploadVideos = async (req, res) => {
     res.status(201).json({
       message: 'Video uploaded successfully',
       videoPath,
-      url: `https://${req.get('host')}${videoPath}`
+      url: `http://${req.get('host')}${videoPath}`
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -65,7 +65,7 @@ export const uploadMultipleImages = async (req, res) => {
 
     const urls = imagePaths.map(path => ({
       path,
-      url: `https://${req.get('host')}${path}`
+      url: `http://${req.get('host')}${path}`
     }));
 
     res.status(201).json({
@@ -90,7 +90,7 @@ export const uploadDocument = async (req, res) => {
     res.status(201).json({
       message: 'Document uploaded successfully',
       documentPath,
-      url: `https://${req.get('host')}${documentPath}`
+      url: `http://${req.get('host')}${documentPath}`
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

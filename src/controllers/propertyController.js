@@ -586,4 +586,3 @@ export const searchProjects = async (req, res) => {
     });
   }
 };
-
