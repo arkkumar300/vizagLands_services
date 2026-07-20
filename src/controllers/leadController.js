@@ -47,7 +47,7 @@ export const getAllLeads = async (req, res) => {
         {
           model: Property,
           as: 'property',
-          attributes: ['id', 'propertyName', 'title', 'price','photos'],
+          attributes: ['id', 'propertyName', 'title', 'price','photos','slug'],
           include: [
             { model: Address, as: 'address' },
             { model: Category, as: 'category' }

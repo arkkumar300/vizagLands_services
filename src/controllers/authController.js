@@ -193,13 +193,22 @@ export const registerClient = async (req, res) => {
   try {
     const { fullName, phoneNumber, email, password, role } = req.body;
 
-    const existingClient = await Client.findOne({
+    const existingClientWithEmail = await Client.findOne({
       where: { email }
     });
 
-    if (existingClient) {
+    if (existingClientWithEmail) {
       return res.status(400).json({ error: 'Email already registered' });
     }
+
+    const existingClientWithPhoneNumber = await Client.findOne({
+      where: { phoneNumber }
+    });
+
+    if (existingClientWithPhoneNumber) {
+      return res.status(400).json({ error: 'Phone Number already registered' });
+    }
+
 
     const client = await Client.create({
       fullName,
@@ -280,12 +289,10 @@ export const loginWithPhone = async (req, res) => {
 
     // Create user if not exists
     if (!user) {
-      user = await Client.create({
-        phoneNumber: cleanPhone,
-        is_verified: false,
+      return res.status(401).json({
+        success: false,
+        message: "User Not Found With This phone Number",
       });
-
-      isNewUser = true;
     }
     // Check if account is active
     if (user.status !== 'active') {
