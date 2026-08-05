@@ -1,7 +1,5 @@
 import models from '../models/index.js';
-import { Op } from 'sequelize';
-
-
+import { Op } from "sequelize";
 
 const { Property, Address, PropertyProfile, Category, Client } = models;
 
@@ -488,50 +486,98 @@ export const getMostViewedProperties = async (req, res) => {
 
 export const searchProperties = async (req, res) => {
   try {
-    const { city, locality, marketType,categoryId, minPrice, maxPrice } = req.query;
+    let {
+      city,
+      locality,
+      marketType,
+      categoryId,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const where = { isProject: false }; // 👈 added condition
-    where.status = 'verified';
-        const addressWhere = {};
-    if (categoryId) where.categoryId = categoryId;
-    if (marketType) where.marketType = marketType;
-    if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price[Op.gte] = minPrice;
-      if (maxPrice) where.price[Op.lte] = maxPrice;
+    // Pagination
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Property Filters
+    const propertyWhere = {
+      isProject: false,
+      status: "verified",
+    };
+
+    if (categoryId) {
+      propertyWhere.categoryId = categoryId;
     }
 
-    if (city) addressWhere.city = city;
-    if (locality) addressWhere.locality = locality;
+    if (marketType) {
+      propertyWhere.marketType = marketType;
+    }
 
-    // 🔹 Query database
-    const properties = await Property.findAll({
-      where: where,
+    // Price Filter
+    if (minPrice || maxPrice) {
+      propertyWhere.price = {};
+
+      if (minPrice) {
+        propertyWhere.price[Op.gte] = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        propertyWhere.price[Op.lte] = Number(maxPrice);
+      }
+    }
+
+    // Address Filters
+    const addressWhere = {};
+
+    if (city) {
+      addressWhere.city = city;
+    }
+
+    if (locality) {
+      addressWhere.locality = locality;
+    }
+
+    // Fetch Data
+    const { rows: properties, count } = await Property.findAndCountAll({
+      where: propertyWhere,
+
       include: [
         {
           model: Address,
-          as: 'address',
-          where: Object.keys(addressWhere).length > 0 ? addressWhere : undefined,
+          as: "address",
+          where: Object.keys(addressWhere).length ? addressWhere : undefined,
+          required: Object.keys(addressWhere).length > 0,
         },
         {
           model: Category,
-          as: 'category'
+          as: "category",
         },
       ],
-      order: [['createdAt', 'DESC']],
+
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+      distinct: true,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
-      message: 'Properties fetched successfully',
+      message: "Properties fetched successfully",
+      totalRecords: count,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
       count: properties.length,
       data: properties,
     });
   } catch (error) {
-    console.error('Search Error:', error);
-    res.status(500).json({
+    console.error("Search Error:", error);
+
+    return res.status(500).json({
       status: false,
-      message: 'Something went wrong while searching properties',
+      message: "Something went wrong while searching properties.",
       error: error.message,
     });
   }
@@ -539,49 +585,98 @@ export const searchProperties = async (req, res) => {
 
 export const searchProjects = async (req, res) => {
   try {
-    const { city, locality, marketType,categoryId, minPrice, maxPrice } = req.query;
+    let {
+      city,
+      locality,
+      marketType,
+      categoryId,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const where = { isProject: true }; // 👈 added condition
-    where.status = 'verified';
-        const addressWhere = {};
-    if (categoryId) where.categoryId = categoryId;
-    if (marketType) where.marketType = marketType;
-    if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price[Op.gte] = minPrice;
-      if (maxPrice) where.price[Op.lte] = maxPrice;
+    // Pagination
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Property Filters
+    const propertyWhere = {
+      isProject: true,
+      status: "verified",
+    };
+
+    if (categoryId) {
+      propertyWhere.categoryId = categoryId;
     }
 
-    if (city) addressWhere.city = city;
-    if (locality) addressWhere.locality = locality;
-    // 🔹 Query database
-    const properties = await Property.findAll({
-      where: where,
+    if (marketType) {
+      propertyWhere.marketType = marketType;
+    }
+
+    // Price Filter
+    if (minPrice || maxPrice) {
+      propertyWhere.price = {};
+
+      if (minPrice) {
+        propertyWhere.price[Op.gte] = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        propertyWhere.price[Op.lte] = Number(maxPrice);
+      }
+    }
+
+    // Address Filters
+    const addressWhere = {};
+
+    if (city) {
+      addressWhere.city = city;
+    }
+
+    if (locality) {
+      addressWhere.locality = locality;
+    }
+
+    // Fetch Projects
+    const { rows: projects, count } = await Property.findAndCountAll({
+      where: propertyWhere,
       include: [
         {
           model: Address,
-          as: 'address',
-          where: Object.keys(addressWhere).length > 0 ? addressWhere : undefined,
+          as: "address",
+          where: Object.keys(addressWhere).length
+            ? addressWhere
+            : undefined,
+          required: Object.keys(addressWhere).length > 0,
         },
         {
           model: Category,
-          as: 'category'
+          as: "category",
         },
       ],
-      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+      distinct: true,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
-      message: 'Properties fetched successfully',
-      count: properties.length,
-      data: properties,
+      message: "Projects fetched successfully",
+      totalRecords: count,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      count: projects.length,
+      data: projects,
     });
   } catch (error) {
-    console.error('Search Error:', error);
-    res.status(500).json({
+    console.error("Search Projects Error:", error);
+
+    return res.status(500).json({
       status: false,
-      message: 'Something went wrong while searching properties',
+      message: "Something went wrong while searching projects.",
       error: error.message,
     });
   }

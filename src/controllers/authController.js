@@ -291,7 +291,7 @@ export const loginWithPhone = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User Not Found With This phone Number",
+        message: "No account found. Please register.",
       });
     }
     // Check if account is active

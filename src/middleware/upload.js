@@ -1,119 +1,192 @@
-import multer from 'multer';
-import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid';
+import multer from "multer";
+import sharp from "sharp";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from "uuid";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const uploadDir = path.join(__dirname, '../../uploads');
+// ----------------------
+// Sharp Configuration
+// ----------------------
+sharp.concurrency(1);
+sharp.cache(false);
+sharp.simd(false);
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// ----------------------
+// Upload Directories
+// ----------------------
+const uploadDir = path.join(__dirname, "../../uploads");
 
-['images', 'documents', 'videos', 'temp'].forEach(dir => {
-  const dirPath = path.join(uploadDir, dir);
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+["images", "documents", "videos", "temp"].forEach((folder) => {
+  const folderPath = path.join(uploadDir, folder);
+
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
   }
 });
 
+// ----------------------
+// Multer Storage
+// ----------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(uploadDir, 'temp'));
+    cb(null, path.join(uploadDir, "temp"));
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
+    cb(null, `${uuidv4()}${path.extname(file.originalname)}`);
+  },
 });
+
+// ----------------------
+// File Filter
+// ----------------------
+const allowedMimes = [
+  // Images
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+
+  // Videos
+  "video/mp4",
+  "video/mpeg",
+  "video/ogg",
+  "video/webm",
+
+  // Audio
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/ogg",
+  "audio/webm",
+  "audio/aac",
+  "audio/mp4",
+
+  // Documents
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    // Images
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/webp',
-
-    // Videos
-    'video/mp4',
-    'video/mpeg',
-    'video/ogg',
-    'video/webm',
-
-    // Audio
-    'audio/mpeg',   // .mp3
-    'audio/mp3',    // sometimes browsers use this
-    'audio/wav',    // .wav
-    'audio/x-wav',
-    'audio/ogg',    // .ogg
-    'audio/webm',   // .webm
-    'audio/aac',    // .aac
-    'audio/mp4',    // .m4a
-
-    // Documents
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ];
-
   if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only image, video, audio, and document files are allowed.'));
+    return cb(null, true);
+  }
+
+  cb(
+    new Error(
+      "Invalid file type. Only images, videos, audio and documents are allowed."
+    )
+  );
+};
+
+// ----------------------
+// Upload Middlewares
+// ----------------------
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
+
+const uploadVideo = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB
+  },
+});
+
+// ----------------------
+// Process Image
+// ----------------------
+const processImage = async (file, options = {}) => {
+  const {
+    width = 1200,
+    quality = 80,
+    folder = "images",
+  } = options;
+
+  const folderPath = path.join(uploadDir, folder);
+
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+
+  const fileName = `${uuidv4()}.webp`;
+  const outputPath = path.join(folderPath, fileName);
+
+  try {
+    await sharp(file.path)
+      .rotate()
+      .resize({
+        width,
+        withoutEnlargement: true,
+        fit: "inside",
+      })
+      .webp({
+        quality,
+        effort: 3,
+      })
+      .toFile(outputPath);
+
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    return `/uploads/${folder}/${fileName}`;
+  } catch (err) {
+    console.error("Sharp Error:", err);
+
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    throw err;
   }
 };
 
-const upload = multer({
-  storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+// ----------------------
+// Move File
+// ----------------------
+const moveFile = (file, folder = "documents") => {
+  const folderPath = path.join(uploadDir, folder);
 
-// Video upload (500MB)
-const uploadVideo = multer({
-  storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 500 * 1024 * 1024 }
-});
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
 
-const processImage = async (file, options = {}) => {
-  const { width = 1200, quality = 80, folder = 'images' } = options;
+  const fileName = path.basename(file.path);
+  const destination = path.join(folderPath, fileName);
 
-  const processedFileName = `${uuidv4()}.webp`;
-  const outputPath = path.join(uploadDir, folder, processedFileName);
+  fs.renameSync(file.path, destination);
 
-  await sharp(file.path)
-    .resize(width, null, { withoutEnlargement: true })
-    .webp({ quality })
-    .toFile(outputPath);
-
-  fs.unlinkSync(file.path);
-
-  return `/uploads/${folder}/${processedFileName}`;
+  return `/uploads/${folder}/${fileName}`;
 };
 
+// ----------------------
+// Delete File
+// ----------------------
 const deleteFile = (filePath) => {
   if (!filePath) return;
 
-  const fullPath = path.join(__dirname, '../..', filePath);
+  const fullPath = path.join(__dirname, "../..", filePath);
 
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);
   }
 };
 
-const moveFile = (file, folder = 'documents') => {
-  const fileName = path.basename(file.path);
-  const newPath = path.join(uploadDir, folder, fileName);
-
-  fs.renameSync(file.path, newPath);
-
-  return `/uploads/${folder}/${fileName}`;
+export {
+  upload,
+  uploadVideo,
+  processImage,
+  moveFile,
+  deleteFile,
 };
-
-export { upload,uploadVideo, processImage, deleteFile, moveFile };
