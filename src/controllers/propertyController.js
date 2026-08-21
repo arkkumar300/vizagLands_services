@@ -140,11 +140,7 @@ export const getAllProperties = async (req, res) => {
         },
         { model: PropertyProfile, as: 'profile' },
         { model: Category, as: 'category' },
-        {
-          model: Client,
-          as: 'client',
-          attributes: ['id', 'fullName', 'phoneNumber', 'email', 'role', 'companyName']
-        }
+        
       ],
       limit: parseInt(limit),
       offset,
@@ -551,6 +547,7 @@ export const searchProperties = async (req, res) => {
           where: Object.keys(addressWhere).length ? addressWhere : undefined,
           required: Object.keys(addressWhere).length > 0,
         },
+        { model: PropertyProfile, as: 'profile' },
         {
           model: Category,
           as: "category",
@@ -651,6 +648,7 @@ export const searchProjects = async (req, res) => {
             : undefined,
           required: Object.keys(addressWhere).length > 0,
         },
+        { model: PropertyProfile, as: 'profile' },
         {
           model: Category,
           as: "category",

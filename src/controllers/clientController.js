@@ -313,6 +313,24 @@ export const updateAdminPassword = async (req, res) => {
   }
 };
 
+export const updateClientStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1️⃣ Find client
+    const client = await Client.findByPk(id);
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+    client.status="suspended";
+    client.update();
+    return res.json({ message: 'client updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 export const deleteClient = async (req, res) => {
   try {
     const { id } = req.params;

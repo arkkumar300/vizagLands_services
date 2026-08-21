@@ -6,7 +6,7 @@ import {
   deleteClient,
   updatePassword,
   getClientByRole,
-  getAdminById,
+  getAdminById,updateClientStatus,
   updateAdminPassword,
   updateAdmin
 } from '../controllers/clientController.js';
@@ -22,6 +22,7 @@ router.put('/:id', authenticate, updateClient);
 router.put('/admin/:id', authenticateAdmin, updateAdmin);
 router.put('/:id/update-password', authenticateClient, updatePassword);
 router.put('/admin/:id/update-password', authenticateAdmin, updateAdminPassword);
-router.delete('/:id', authenticateClient, deleteClient);
+router.put('/admin/:id/update-status', authenticateAdmin, updateClientStatus);
+router.delete('/:id', authenticateAdmin, deleteClient);
 
 export default router;
