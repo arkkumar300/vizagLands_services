@@ -161,15 +161,15 @@ const PropertyProfile = sequelize.define('PropertyProfile', {
     allowNull: true
   },
   workstations: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: true
   },
   cabins: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: true
   },
   conferenceRooms: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: true
   },
   furnishedStatus: {

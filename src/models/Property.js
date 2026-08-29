@@ -170,6 +170,22 @@ const Property = sequelize.define('Property', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  privateNote: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  metaTitle: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  metaDescription: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  metaKeywords: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
   isHandOver: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
