@@ -138,6 +138,11 @@ export const getAllProperties = async (req, res) => {
           as: 'address',
           where: Object.keys(addressWhere).length > 0 ? addressWhere : undefined
         },
+        {
+          model: Client,
+          as: 'client',
+          attributes: ['id', 'fullName', 'phoneNumber', 'email', 'role', 'companyName']
+        },
         { model: PropertyProfile, as: 'profile' },
         { model: Category, as: 'category' },
         

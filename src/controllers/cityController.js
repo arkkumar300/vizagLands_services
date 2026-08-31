@@ -6,33 +6,35 @@ export const addOrUpdateCity = async (req, res) => {
   const { city, locality } = req.body;
 
   if (!city || !locality) {
-    return res.status(400).json({ message: 'City and locality are required' });
+    return res.status(400).json({
+      message: 'City and locality are required'
+    });
   }
 
   try {
-    let cityRecord = await City.findOne({ where: { city } });
+    const cityRecord = await City.findOne({
+      where: { city }
+    });
 
     if (cityRecord) {
-      const existingLocalities = cityRecord.locality || [];
-
-      // Add only if not already present
-      if (!existingLocalities.includes(locality)) {
-        existingLocalities.push(locality);
-      }
-
-      cityRecord.locality = existingLocalities;
-      await cityRecord.save();
-    } else {
-      cityRecord = await City.create({
-        city,
-        locality: [locality]
+      return res.status(409).json({
+        message: 'This city already exists'
       });
     }
 
-    res.json(cityRecord);
+    const newCity = await City.create({
+      city,
+      locality
+    });
+
+    return res.status(201).json(newCity);
+
   } catch (err) {
     console.error('Error saving city:', err);
-    res.status(500).json({ message: 'Internal server error' });
+
+    return res.status(500).json({
+      message: 'Internal server error'
+    });
   }
 };
 
@@ -47,6 +49,7 @@ export const updateAllCities = async (req, res) => {
     let cityRecord = await City.findOne({ where: { id } });
 
     if (cityRecord) {
+      cityRecord.city = city;
       // Convert string to array if it's not already an array
       let parsedLocality = typeof locality === 'string'
         ? locality.split(',').map(l => l.trim()) // split + trim spaces
